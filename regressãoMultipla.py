@@ -77,6 +77,16 @@ ax2.set_title("Área x Energia consumida")
 ax2.set_xlabel("Consumo previsto")
 ax2.set_ylabel("Consumo original")
 plt.show()
+print("\n     ")
+#Gráfico de análise
+plt.scatter(x2, y, color='blue', label='Dados reais')  # Pontos reais
+plt.plot(x2_test, y_pred2, color='red', label='Regressão Linear')  # Linha da regressão - Tendencia da renda subir com a idade
+##ele usa os x de testes e exibe os y de predição
+plt.xlabel("Área")
+plt.ylabel("Consumo de energia")
+plt.title("Influência da área no consumo de energia")
+plt.legend() ##Mostra as legendas estabelecidas
+plt.show()
 
 #x3 - Número de ocupantes
 x3_train, x3_test, y_train, y_test = train_test_split(x3, y, test_size=0.33, random_state=42)
@@ -94,6 +104,16 @@ ax3.plot([1000,7000],[1000,7000],'--r')
 ax3.set_title("Número de ocupantes x Energia consumida")
 ax3.set_xlabel("Consumo previsto")
 ax3.set_ylabel("Consumo original")
+plt.show()
+print("\n     ")
+#Gráfico de análise
+plt.scatter(x3, y, color='blue', label='Dados reais')  # Pontos reais
+plt.plot(x3_test, y_pred3, color='red', label='Regressão Linear')  # Linha da regressão - Tendencia da renda subir com a idade
+##ele usa os x de testes e exibe os y de predição
+plt.xlabel("Número de ocupantes")
+plt.ylabel("Consumo de energia")
+plt.title("Influência do número de ocupantes no consumo de energia")
+plt.legend() ##Mostra as legendas estabelecidas
 plt.show()
 
 #x4 - Aparelhos
@@ -113,6 +133,16 @@ ax4.set_title("Aparelhos x Energia consumida")
 ax4.set_xlabel("Consumo previsto")
 ax4.set_ylabel("Consumo original")
 plt.show()
+print("\n     ")
+#Gráfico de análise
+plt.scatter(x4, y, color='blue', label='Dados reais')  # Pontos reais
+plt.plot(x4_test, y_pred4, color='red', label='Regressão Linear')  # Linha da regressão - Tendencia da renda subir com a idade
+##ele usa os x de testes e exibe os y de predição
+plt.xlabel("Aparelhos")
+plt.ylabel("Consumo de energia")
+plt.title("Influência da quantidade de aparelhos no consumo de energia")
+plt.legend() ##Mostra as legendas estabelecidas
+plt.show()
 
 #x5 - Temperatura média
 x5_train, x5_test, y_train, y_test = train_test_split(x5, y, test_size=0.33, random_state=42)
@@ -122,18 +152,15 @@ x5_train_scaled = scaler.fit_transform(x5_train.values.reshape(-1,1))
 x5_test_scaled = scaler.transform(x5_test.values.reshape(-1,1))
 reg5 = LinearRegression().fit(x5_train_scaled, y_train)
 y_pred5 = reg5.predict(x5_test_scaled)
-
 print("Coeficientes da regressão entre temperatura média e energia consumida:  ", reg5.coef_)
 print("Intercepto da regressão entre Temperatura média e energia consumida:  ", reg5.intercept_)
 y_pred5=reg5.predict(x5_test.values.reshape(-1,1))
 print("\n.............. ...  ..................")
 print("Erro squared",mean_squared_error(y_test,y_pred5))
 print("Erro absoluto",mean_absolute_error(y_test,y_pred5)) 
-
 print(y_pred5[:10])  # Exibir os primeiros valores previstos
 print(y_test[:10])  # Exibir os valores reais correspondentes
 print(psv[['temperatura_média', 'energia_consumida']].corr())
-
 ## vendo se preveu x5 bem
 fig,ax5=plt.subplots()
 ax5.scatter(y_pred5,y_test)
@@ -141,6 +168,16 @@ ax5.plot([3000,4600],[3000,4600],'--r')
 ax5.set_title("Temperatura média x Energia consumida")
 ax5.set_xlabel("Consumo previsto")
 ax5.set_ylabel("Consumo original")
+plt.show()
+print("\n     ")
+#Gráfico de análise
+plt.scatter(x5, y, color='blue', label='Dados reais')  # Pontos reais
+plt.plot(x5_test, y_pred5, color='red', label='Regressão Linear')  # Linha da regressão - Tendencia da renda subir com a idade
+##ele usa os x de testes e exibe os y de predição
+plt.xlabel("temperatura média")
+plt.ylabel("Consumo de energia")
+plt.title("Influência da temperatura no consumo de energia")
+plt.legend() ##Mostra as legendas estabelecidas
 plt.show()
 
 #x6 - Dia da semana
@@ -159,6 +196,16 @@ ax6.plot([1000,7000],[1000,7000],'--r')
 ax6.set_title("Dia da semana x Energia consumida")
 ax6.set_xlabel("Consumo previsto")
 ax6.set_ylabel("Consumo original")
+plt.show()
+print("\n     ")
+#Gráfico de análise
+plt.scatter(x6, y, color='blue', label='Dados reais')  # Pontos reais
+plt.plot(x6_test, y_pred6, color='red', label='Regressão Linear')  # Linha da regressão - Tendencia da renda subir com a idade
+##ele usa os x de testes e exibe os y de predição
+plt.xlabel("Dia da semana")
+plt.ylabel("Consumo de energia")
+plt.title("Influência do dia da semana no consumo de energia")
+plt.legend() ##Mostra as legendas estabelecidas
 plt.show()
 
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
@@ -182,5 +229,3 @@ ax10.plot([1000,7000],[1000,7000],'--r')   ##essa reta compara o valor previsto 
 ## resumindo  -  no gráfico, o horizonte é valores previstos e o vertical é valores reais.
 ## A margem de erro mostra a margem de diferença entre o real e o gerado.
 ##Se os pontos estão agupados, encontrou bem o
-
-
