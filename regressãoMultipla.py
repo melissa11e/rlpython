@@ -1,9 +1,8 @@
 import pandas as pd
-import numpy as n
+import numpy as np
 from sklearn.model_selection import train_test_split   ##Para fazer treino e teste
 from sklearn.linear_model import LinearRegression  ##Para fazer a regressão
-from sklearn.metrics import mean_absolute_error #análisa o valor de erro da suposição
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error #análisa o valor de erro da suposição
 import matplotlib.pyplot as plt  ##Faz os gráficos
 from sklearn.preprocessing import LabelEncoder  ##transforma os str em numérico
 
@@ -38,15 +37,29 @@ print("Coeficientes da regressão entre tipo de construção e energia consumida
 print("Intercepto da regressão entre tipo de construção e energia consumida:  ", reg1.intercept_)
 y_pred1 =reg1.predict(x1_test.values.reshape(-1,1))
 print("\n.............. ...  ..................")
-print("Erro squared",mean_squared_error(y_test,y_pred1))
-print("Erro absoluto", mean_absolute_error(y_test,y_pred1)) 
-## vendo se preveu x1 bem
-fig,ax1=plt.subplots()
-ax1.scatter(y_pred1,y_test)
-ax1.plot([1000,7000],[1000,7000],'--r')
-ax1.set_title("Tipo de construção x Energia consumida")
-ax1.set_xlabel("Consumo previsto")
-ax1.set_ylabel("Consumo original")
+mae1= mean_absolute_error(y_test,y_pred1)
+print("Erro absoluto", mean_absolute_error(y_test,y_pred1))
+erro_percentual = (mae1 / y_test.mean()) * 100
+print(f"Erro percentual médio: {erro_percentual:.2f}%")
+if(erro_percentual<20):
+    print("Erro aceitável")
+else:
+    print("Erro grave")
+
+
+## vendo se preveu x1 bem - grafico de barras
+df1 = pd.DataFrame({'Tipo de Construção': x1_test.values, 'Consumo Original': y_test, 'Consumo Previsto': y_pred1})
+grupo1 = df1.groupby('Tipo de Construção').mean()
+fig, ax1=plt.subplots()
+indice1 = np.arange(len(grupo1))
+width = 0.4  # Largura das barras
+plt.bar(indice1 - width/2, grupo1['Consumo Original'], width, label='Consumo Original')
+plt.bar(indice1 + width/2, grupo1['Consumo Previsto'], width, label='Consumo Previsto', alpha=0.7)
+plt.xticks(indice1, grupo1.index)
+plt.xlabel("Tipo de Construção")
+plt.ylabel("Consumo Médio de Energia")
+plt.title("Comparação entre Consumo Previsto e Original por Tipo de Construção")
+plt.legend()
 plt.show()
 
 #Gráfico de análise
@@ -190,13 +203,19 @@ print("\n.............. ...  ..................")
 print("Erro squared",mean_squared_error(y_test,y_pred6))
 print("Erro absoluto",mean_absolute_error(y_test,y_pred6)) 
 ## vendo se preveu x6 bem
+df6=pd.DataFrame({'Dia da Semana':x6_test.values,'Consumo Original':y_test, 'Consumo Previsto':y_pred6})
+grupo6=df6.groupby('Dia da Semana').mean()
 fig,ax6=plt.subplots()
-ax6.scatter(y_pred6,y_test)
-ax6.plot([1000,7000],[1000,7000],'--r')
-ax6.set_title("Dia da semana x Energia consumida")
-ax6.set_xlabel("Consumo previsto")
-ax6.set_ylabel("Consumo original")
+indice6=np.arange(len(grupo6))
+plt.bar(indice6 - width/2, grupo6['Consumo Original'], width, label='Consumo Original',alpha=0.7)
+plt.bar(indice6 + width/2, grupo6['Consumo Previsto'], width, label='Consumo Previsto',alpha=0.7)
+plt.xticks(indice6,grupo6.index)
+plt.xlabel("Semana/Final de semana")
+plt.ylabel("Consumo Médio de Energia")
+plt.title("Comparação entre Consumo Previsto e Original por dia da semana")
+plt.legend() 
 plt.show()
+
 print("\n     ")
 #Gráfico de análise
 plt.scatter(x6, y, color='blue', label='Dados reais')  # Pontos reais
@@ -215,7 +234,9 @@ print("intercepto",reg.intercept_)
 y_pred =reg.predict(x_test)
 print("\n                                ..  ...   ")
 print(mean_squared_error(y_test,y_pred))
-print(mean_absolute_error(y_test,y_pred)) 
+print(mean_absolute_error(y_test,y_pred))
+
+
 ##Analise de o mean error vai aumentar ou diminuir conforme você vai usando as colunas
 
 
