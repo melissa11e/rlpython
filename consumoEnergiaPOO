@@ -1,0 +1,137 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split   ##Para fazer treino e teste
+from sklearn.linear_model import LinearRegression  ##Para fazer a regressão
+from sklearn.metrics import mean_squared_error, mean_absolute_error #análisa o valor de erro da suposição
+import matplotlib.pyplot as plt  ##Faz os gráficos
+from sklearn.preprocessing import LabelEncoder  ##transforma os str em numérico
+
+psv = pd.read_csv('baseEnergia.csv')
+
+encoder_dia = LabelEncoder()
+encoder_tipo = LabelEncoder()
+
+psv['dia_semana'] = encoder_dia.fit_transform(psv['dia_semana'])
+psv['tipo_construção'] = encoder_tipo.fit_transform(psv['tipo_construção'])
+
+
+#x=psv[['número_ocupantes','área']]
+#x=psv.drop('energia_consumida',axis=1)  ##esse une todas as variáveis, excluindo o y
+
+x1=psv.tipo_construção
+x2=psv.área
+x3=psv.número_ocupantes
+x4=psv.aparelhos
+x5=psv.temperatura_média
+x6=psv.dia_semana
+y=psv.energia_consumida
+
+print(psv)
+
+
+#x1 - tipo de construção
+def predicao(x):
+      x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+      reg= LinearRegression().fit(x_train.values.reshape(-1,1),y_train)
+      print("Coeficiente: ", reg.coef_) #quanto maior o coeficiente, mais ele influência
+      print("Intercepto:  ", reg.intercept_)
+      y_pred =reg.predict(x_test.values.reshape(-1,1))
+      print("\n.............. ...  ..................")
+      mae(y_test,y_pred)
+      return x_test, y_test, y_pred  # Retorna as variáveis
+
+def mae(y_test,y_pred):
+      mae= mean_absolute_error(y_test,y_pred)
+      print(mae)
+      erro_percentual = (mae / y_test.mean()) * 100
+      print(f"Erro percentual médio: {erro_percentual:.2f}%")
+      if(erro_percentual<20):
+       print("Erro aceitável")
+      else:
+          print("Erro grave")
+    
+def axxy(x, ax):
+    x_test, y_test, y_pred = predicao(x)
+    ax.scatter(y_pred, y_test)
+    ax.plot([1000, 7000], [1000, 7000], '--r')
+    ax.set_xlabel("Consumo previsto")
+    ax.set_ylabel("Consumo original")
+    
+def analise1(x):
+      print("Construção x Consumo")
+      x_test, y_test, y_pred = predicao(x)
+      df = pd.DataFrame({'Tipo de Construção': x_test.values, 'Consumo Original': y_test, 'Consumo Previsto': y_pred})
+      grupo = df.groupby('Tipo de Construção').mean()
+      fig, ax=plt.subplots()
+      indice = np.arange(len(grupo))
+      width = 0.4  # Largura das barras
+      plt.bar(indice - width/2, grupo['Consumo Original'], width, label='Consumo Original')
+      plt.bar(indice + width/2, grupo['Consumo Previsto'], width, label='Consumo Previsto', alpha=0.7)
+      plt.xticks(indice, grupo.index)
+      plt.xlabel("Tipo de Construção")
+      plt.ylabel("Consumo Médio de Energia")
+      plt.title("Comparação entre Consumo Previsto e Original por Tipo de Construção")
+      plt.legend()
+      plt.show()
+
+def analise2(x):
+    print("Área x consumo")
+    fig,ax=plt.subplots()
+    x_test, y_test, y_pred = predicao(x)
+    axxy(x2,ax)
+    ax.set_title("Área x Energia consumida")
+
+    plt.show()
+
+def analise3(x):
+    print("Ocupantes x Consumo")
+    x_test, y_test, y_pred = predicao(x)
+    fig,ax=plt.subplots()
+    axxy(x3,ax)
+    ax.set_title("Número de ocupantes x Energia consumida")
+    plt.show()
+
+def analise4(x):
+    print("Aparelhos x Consumo")
+    x_test, y_test, y_pred = predicao(x)
+    fig,ax=plt.subplots()
+    axxy(x4,ax)
+    ax.set_title("Aparelhos x Energia consumida")
+    plt.show()
+
+def analise5(x):
+    print("Temperatura média x Consumo")
+    x_test, y_test, y_pred = predicao(x)
+    fig,ax=plt.subplots()
+    ax.scatter(y_pred,y_test)
+    ax.plot([3000,4600],[3000,4600],'--r')
+    ax.set_xlabel("Consumo previsto")
+    ax.set_ylabel("Consumo original")
+    ax.set_title("Temperatura média x Energia consumida")
+    plt.show()
+
+def analise6(x):
+    print("Dia da Semana x Consumo")
+    x_test, y_test, y_pred = predicao(x)
+    df=pd.DataFrame({'Dia da Semana':x_test.values,'Consumo Original':y_test, 'Consumo Previsto':y_pred})
+    grupo6=df.groupby('Dia da Semana').mean()
+    fig,ax=plt.subplots()
+    indice6=np.arange(len(grupo6))
+    width=0.4
+    plt.bar(indice6 - width/2, grupo6['Consumo Original'], width, label='Consumo Original',alpha=0.7)
+    plt.bar(indice6 + width/2, grupo6['Consumo Previsto'], width, label='Consumo Previsto',alpha=0.7)
+    plt.xticks(indice6,grupo6.index)
+    plt.xlabel("Semana/Final de semana")
+    plt.ylabel("Consumo Médio de Energia")
+    plt.title("Comparação entre Consumo Previsto e Original por dia da semana")
+    plt.legend() 
+    plt.show()
+
+
+
+analise1(x1)
+analise2(x2)
+analise3(x3)
+analise4(x4)
+analise5(x5)
+analise6(x6)
