@@ -1,22 +1,18 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split   ##Para fazer treino e teste
-from sklearn.linear_model import LinearRegression  ##Para fazer a regressão
-from sklearn.metrics import mean_squared_error, mean_absolute_error #análisa o valor de erro da suposição
-import matplotlib.pyplot as plt  ##Faz os gráficos
-from sklearn.preprocessing import LabelEncoder  ##transforma os str em numérico
-
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+#coeficiente: quanto a x influencia no consumo
+#intercepto: valor de energia consumida quando a temperatura é zero, após escalonamento
 psv = pd.read_csv('baseEnergia.csv')
 
 encoder_dia = LabelEncoder()
 encoder_tipo = LabelEncoder()
-
 psv['dia_semana'] = encoder_dia.fit_transform(psv['dia_semana'])
 psv['tipo_construção'] = encoder_tipo.fit_transform(psv['tipo_construção'])
-
-
-#x=psv[['número_ocupantes','área']]
-#x=psv.drop('energia_consumida',axis=1)  ##esse une todas as variáveis, excluindo o y
 
 x1=psv.tipo_construção
 x2=psv.área
@@ -26,13 +22,15 @@ x5=psv.temperatura_média
 x6=psv.dia_semana
 y=psv.energia_consumida
 
-print(psv)
+xall=psv.drop('energia_consumida',axis=1)  ##esse une todas as variáveis, excluindo o y
 
 
-#x1 - tipo de construção
-def predicao(x):
+#Regressão com 1 variável
+def predicao(x,nome_coluna):  #esse (x) é o que o código espera que nós passemos de valor quando a função for chamada. nesse caso é x1... que passa pra análise1 que passa para ela.
       x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
       reg= LinearRegression().fit(x_train.values.reshape(-1,1),y_train)
+      print(f"\nCorrelação entre {nome_coluna} e energia_consumida:")
+      print(psv[[nome_coluna, 'energia_consumida']].corr())
       print("Coeficiente: ", reg.coef_) #quanto maior o coeficiente, mais ele influência
       print("Intercepto:  ", reg.intercept_)
       y_pred =reg.predict(x_test.values.reshape(-1,1))
@@ -40,98 +38,149 @@ def predicao(x):
       mae(y_test,y_pred)
       return x_test, y_test, y_pred  # Retorna as variáveis
 
-def mae(y_test,y_pred):
+#regressão múltipla
+def predicaoM(x):
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+    reg= LinearRegression().fit(x_train,y_train)
+    print(psv[xall.columns.tolist() + ['energia_consumida']].corr()['energia_consumida'])
+    print("Coeficiente: ", reg.coef_) #quanto maior o coeficiente, mais ele influência
+    print("Intercepto:  ", reg.intercept_)
+    y_pred =reg.predict(x_test)
+    print("\n.............. ...  ..................")
+    mae(y_test,y_pred)
+    return x_test, y_test, y_pred  # Retorna as variáveis
+
+
+def mae(y_test,y_pred):  # não precisa colocar mae aqui pq ela já tá em predicao()
       mae= mean_absolute_error(y_test,y_pred)
-      print(mae)
+      print("erro MAE",mae)
       erro_percentual = (mae / y_test.mean()) * 100
       print(f"Erro percentual médio: {erro_percentual:.2f}%")
       if(erro_percentual<20):
        print("Erro aceitável")
       else:
           print("Erro grave")
-    
-def axxy(x, ax):
-    x_test, y_test, y_pred = predicao(x)
+
+def grafico_dispersao(x, y, x_test,y_test, y_pred, titulo, xlabel, ylabel):
+# vendo se preveu bem
+    fig, ax = plt.subplots()
     ax.scatter(y_pred, y_test)
-    ax.plot([1000, 7000], [1000, 7000], '--r')
+    ax.plot([min(y_test), max(y_test)], [min(y_pred), max(y_pred)], '--r')
     ax.set_xlabel("Consumo previsto")
     ax.set_ylabel("Consumo original")
-    
+    ax.set_title(titulo)
+    plt.show()
+# gráfico de análise 
+    plt.scatter(x, y, color='blue', label='Dados reais')
+    plt.plot(x_test, y_pred, color='red', label='Regressão Linear') #linha de regressão. tendencia de y subir com x
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(f"Influência de {xlabel} no {ylabel}")
+    plt.legend()
+    plt.show()
+# Funções de análise
 def analise1(x):
-      print("Construção x Consumo")
-      x_test, y_test, y_pred = predicao(x)
-      df = pd.DataFrame({'Tipo de Construção': x_test.values, 'Consumo Original': y_test, 'Consumo Previsto': y_pred})
-      grupo = df.groupby('Tipo de Construção').mean()
-      fig, ax=plt.subplots()
-      indice = np.arange(len(grupo))
-      width = 0.4  # Largura das barras
-      plt.bar(indice - width/2, grupo['Consumo Original'], width, label='Consumo Original')
-      plt.bar(indice + width/2, grupo['Consumo Previsto'], width, label='Consumo Previsto', alpha=0.7)
-      plt.xticks(indice, grupo.index)
-      plt.xlabel("Tipo de Construção")
-      plt.ylabel("Consumo Médio de Energia")
-      plt.title("Comparação entre Consumo Previsto e Original por Tipo de Construção")
-      plt.legend()
-      plt.show()
+    print("Construção x Consumo")
+    x_test, y_test, y_pred = predicao(x,"tipo_construção")
+    df = pd.DataFrame({'Tipo de Construção': x_test.values, 'Consumo Original': y_test, 'Consumo Previsto': y_pred})
+    grupo = df.groupby('Tipo de Construção').mean()
+    
+    fig, ax = plt.subplots()
+    indice = np.arange(len(grupo))
+    width = 0.4
+    plt.bar(indice - width/2, grupo['Consumo Original'], width, label='Consumo Original')
+    plt.bar(indice + width/2, grupo['Consumo Previsto'], width, label='Consumo Previsto', alpha=0.7)
+    plt.xticks(indice, grupo.index)
+    plt.xlabel("Tipo de Construção")
+    plt.ylabel("Consumo Médio de Energia")
+    plt.title("Construção X Consumo\n(0: Residencial, 1: Comercial, 2: Industrial)")
 
-def analise2(x):
-    print("Área x consumo")
-    fig,ax=plt.subplots()
-    x_test, y_test, y_pred = predicao(x)
-    axxy(x2,ax)
-    ax.set_title("Área x Energia consumida")
-
-    plt.show()
-
-def analise3(x):
-    print("Ocupantes x Consumo")
-    x_test, y_test, y_pred = predicao(x)
-    fig,ax=plt.subplots()
-    axxy(x3,ax)
-    ax.set_title("Número de ocupantes x Energia consumida")
-    plt.show()
-
-def analise4(x):
-    print("Aparelhos x Consumo")
-    x_test, y_test, y_pred = predicao(x)
-    fig,ax=plt.subplots()
-    axxy(x4,ax)
-    ax.set_title("Aparelhos x Energia consumida")
+    plt.legend()
     plt.show()
 
 def analise5(x):
-    print("Temperatura média x Consumo")
-    x_test, y_test, y_pred = predicao(x)
+    x_test, y_test, y_pred = predicao(x, 'temperatura_média')
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+    from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler()
+    x_train_scaled = scaler.fit_transform(x_train.values.reshape(-1,1))
+    x_test_scaled = scaler.transform(x_test.values.reshape(-1,1))
+    reg = LinearRegression().fit(x_train_scaled, y_train)
+    y_pred = reg.predict(x_test_scaled)
+    print("Coeficiente: ", reg.coef_)
+    print("Intercepto: ", reg.intercept_)
+    y_pred=reg.predict(x_test.values.reshape(-1,1))
+    print("\n.............. ...  ..................")
+    print("Erro absoluto",mean_absolute_error(y_test,y_pred)) 
+    print(psv[['temperatura_média', 'energia_consumida']].corr())  #mostra a força de relação entre temperatura e consumo. bom só a partir de 0.4
+    #na tabela mostrada, sempre será 1 quando (x,y) for a mesma variável (temperatura,temperatura)
+    ## vendo se preveu x5 bem
     fig,ax=plt.subplots()
     ax.scatter(y_pred,y_test)
     ax.plot([3000,4600],[3000,4600],'--r')
+    ax.set_title("Temperatura média x Energia consumida")
     ax.set_xlabel("Consumo previsto")
     ax.set_ylabel("Consumo original")
-    ax.set_title("Temperatura média x Energia consumida")
+    plt.show()
+    print("\n     ")
+    #Gráfico de análise
+    plt.scatter(x, y, color='blue', label='Dados reais')  # Pontos reais
+    plt.plot(x_test, y_pred, color='red', label='Regressão Linear')  # Linha da regressão - Tendencia de y subir com x
+    ##ele usa os x de testes e exibe os y de predição
+    plt.xlabel("temperatura média")
+    plt.ylabel("Consumo de energia")
+    plt.title("Influência da temperatura no consumo de energia")
+    plt.legend() ##Mostra as legendas estabelecidas
     plt.show()
 
 def analise6(x):
     print("Dia da Semana x Consumo")
-    x_test, y_test, y_pred = predicao(x)
-    df=pd.DataFrame({'Dia da Semana':x_test.values,'Consumo Original':y_test, 'Consumo Previsto':y_pred})
-    grupo6=df.groupby('Dia da Semana').mean()
-    fig,ax=plt.subplots()
-    indice6=np.arange(len(grupo6))
-    width=0.4
-    plt.bar(indice6 - width/2, grupo6['Consumo Original'], width, label='Consumo Original',alpha=0.7)
-    plt.bar(indice6 + width/2, grupo6['Consumo Previsto'], width, label='Consumo Previsto',alpha=0.7)
-    plt.xticks(indice6,grupo6.index)
+    x_test, y_test, y_pred = predicao(x, 'dia_semana')
+    df = pd.DataFrame({'Dia da Semana': x_test.values, 'Consumo Original': y_test, 'Consumo Previsto': y_pred})
+    grupo = df.groupby('Dia da Semana').mean()
+    
+    fig, ax = plt.subplots()
+    indice = np.arange(len(grupo))
+    width = 0.4
+    plt.bar(indice - width/2, grupo['Consumo Original'], width, label='Consumo Original', alpha=0.7)
+    plt.bar(indice + width/2, grupo['Consumo Previsto'], width, label='Consumo Previsto', alpha=0.7)
+    plt.xticks(indice, grupo.index)
     plt.xlabel("Semana/Final de semana")
     plt.ylabel("Consumo Médio de Energia")
     plt.title("Comparação entre Consumo Previsto e Original por dia da semana")
-    plt.legend() 
+    plt.legend()
+    plt.show()
+
+def analise_comum(x, nome_coluna, titulo, xlabel, ylabel): #2,3,4,5
+    print(titulo)
+    x_test, y_test, y_pred = predicao(x, nome_coluna)
+    grafico_dispersao(x, y, x_test,y_test, y_pred, titulo, xlabel, ylabel)  
+
+# Chamando análises
+def analiseM(x):
+    x_test, y_test, y_pred = predicaoM(x)
+    
+    # Gráfico de dispersão
+    fig, ax = plt.subplots()
+    ax.scatter(y_test, y_pred, alpha=0.6)  # Agora X = real, Y = previsto
+    
+    # Linha ideal (y = x)
+    min_val = min(y_test.min(), y_pred.min())
+    max_val = max(y_test.max(), y_pred.max())
+    ax.plot([min_val, max_val], [min_val, max_val], '--r')
+    
+    ax.set_xlabel("Consumo original")
+    ax.set_ylabel("Consumo previsto")
+    ax.set_title("Análise Geral - Regressão Múltipla")
     plt.show()
 
 
+analiseM(xall)
 
 analise1(x1)
-analise2(x2)
-analise3(x3)
-analise4(x4)
-analise5(x5)
+analise_comum(x2, 'área', "Área x Consumo", "Área", "Consumo de Energia")
+analise_comum(x3, 'número_ocupantes', "Ocupantes x Consumo", "Número de Ocupantes", "Consumo de Energia")
+analise_comum(x4, 'aparelhos', "Aparelhos x Consumo", "Quantidade de Aparelhos", "Consumo de Energia")
+analise_comum(x5,'temperatura_média', "Temperatura Média x Consumo", "Temperatura Média", "Consumo de Energia")
 analise6(x6)
+
