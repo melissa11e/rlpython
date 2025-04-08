@@ -14,7 +14,7 @@ encoder_tipo = LabelEncoder()
 psv['dia_semana'] = encoder_dia.fit_transform(psv['dia_semana'])
 psv['tipo_construção'] = encoder_tipo.fit_transform(psv['tipo_construção'])
 
-x1=psv.tipo_construção
+x1=psv.tipo_construção   ##residencial é por exemplo um prédio com vários apartamentos de residencia
 x2=psv.área
 x3=psv.número_ocupantes
 x4=psv.aparelhos
@@ -22,7 +22,7 @@ x5=psv.temperatura_média
 x6=psv.dia_semana
 y=psv.energia_consumida
 
-xall=psv.drop('energia_consumida',axis=1)  ##esse une todas as variáveis, excluindo o y
+xall=psv.drop(['energia_consumida'],axis=1)  ##esse une todas as variáveis, excluindo o y
 
 
 #Regressão com 1 variável
@@ -48,7 +48,7 @@ def predicaoM(x):
     y_pred =reg.predict(x_test)
     print("\n.............. ...  ..................")
     mae(y_test,y_pred)
-    return x_test, y_test, y_pred  # Retorna as variáveis
+    return x_test, y_test, y_pred, reg # Retorna as variáveis
 
 
 def mae(y_test,y_pred):  # não precisa colocar mae aqui pq ela já tá em predicao()
@@ -153,34 +153,54 @@ def analise6(x):
 
 def analise_comum(x, nome_coluna, titulo, xlabel, ylabel): #2,3,4,5
     print(titulo)
-    x_test, y_test, y_pred = predicao(x, nome_coluna)
+    x_test, y_test, y_pred= predicao(x, nome_coluna)
     grafico_dispersao(x, y, x_test,y_test, y_pred, titulo, xlabel, ylabel)  
 
-# Chamando análises
+
 def analiseM(x):
-    x_test, y_test, y_pred = predicaoM(x)
-    
-    # Gráfico de dispersão
-    fig, ax = plt.subplots()
-    ax.scatter(y_test, y_pred, alpha=0.6)  # Agora X = real, Y = previsto
-    
+    x_test, y_test, y_pred,reg = predicaoM(x)
+
+    # Pegando os valores de 'aparelhos' correspondentes aos índices de x_test
+    tc_test = psv.loc[x_test.index, 'tipo_construção']
+
+    # Gráfico de dispersão com coloração por número de aparelhos
+    fig, ax = plt.subplots(figsize=(8, 6))
+    scatter = ax.scatter(y_test, y_pred, c=tc_test, cmap='viridis', alpha=0.7)
+    cbar = plt.colorbar(scatter)
+    cbar.set_label('Tipo de construção')
+
     # Linha ideal (y = x)
     min_val = min(y_test.min(), y_pred.min())
     max_val = max(y_test.max(), y_pred.max())
     ax.plot([min_val, max_val], [min_val, max_val], '--r')
-    
+
     ax.set_xlabel("Consumo original")
     ax.set_ylabel("Consumo previsto")
-    ax.set_title("Análise Geral - Regressão Múltipla")
+    ax.set_title("Análise Geral - Cor por tipo de construção")
+    plt.tight_layout()
     plt.show()
 
+def entrada(x):
+    x_test, y_test, y_pred,reg =predicaoM(xall)
+    tc = int(input("Digite o tipo de construção:\n 0-Residencial, 1-Comercial, 2-Industrial "))  # Entrada do usuário
+    area = float(input("Digite o valor da área: "))  # Entrada do usuário
+    no = int(input("Digite quantas pessoas ocupam o local: "))  # Entrada do usuário
+    ap= int(input("Digite a quantidade de aparelhos do local: "))
+    tm = float(input("Digite a temperatura média do local: "))  # Entrada do usuário
+    ds=int(input("Digite o dia da semana:\n 0- Dia da semana, 1-final de semana "))
+    consumo_prev = reg.predict([[tc,area,no,ap,tm,ds]])
+    print(f"\n⚡ Consumo previsto: {consumo_prev[0]:.2f} kWh")
 
+
+# Chamando análises
+#entrada(xall)
 analiseM(xall)
-
 analise1(x1)
 analise_comum(x2, 'área', "Área x Consumo", "Área", "Consumo de Energia")
 analise_comum(x3, 'número_ocupantes', "Ocupantes x Consumo", "Número de Ocupantes", "Consumo de Energia")
 analise_comum(x4, 'aparelhos', "Aparelhos x Consumo", "Quantidade de Aparelhos", "Consumo de Energia")
 analise_comum(x5,'temperatura_média', "Temperatura Média x Consumo", "Temperatura Média", "Consumo de Energia")
 analise6(x6)
+
+#ele provavelmente segmentou por número de aparelhos pq é um desvio padrão pequeno
 
