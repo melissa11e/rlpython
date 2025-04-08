@@ -189,7 +189,7 @@ def entrada(x):
     tm = float(input("Digite a temperatura média do local: "))  # Entrada do usuário
     ds=int(input("Digite o dia da semana:\n 0- Dia da semana, 1-final de semana "))
     consumo_prev = reg.predict([[tc,area,no,ap,tm,ds]])
-    print(f"\n⚡ Consumo previsto: {consumo_prev[0]:.2f} kWh")
+    print(f"\n Consumo previsto: {consumo_prev[0]:.2f} kWh")
 
 
 # Chamando análises
